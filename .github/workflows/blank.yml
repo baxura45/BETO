@@ -40,6 +40,7 @@ jobs:
             qt6-base:p
             qt6-5compat:p
             qt6-svg:p
+            qt6-networkauth:p
             libarchive:p
             qrencode:p
             tomlplusplus:p
