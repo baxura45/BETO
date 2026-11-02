@@ -1,0 +1,70 @@
+name: Build Manisa Launcher (.EXE)
+
+on:
+  push:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Manisa Launcher (Windows x64)
+    runs-on: windows-2022
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup MSYS2 and Dependencies
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: true
+          install: >-
+            git
+          pacboy: >-
+            toolchain:p
+            cmake:p
+            ninja:p
+            qt6-base:p
+            qt6-5compat:p
+            qt6-svg:p
+            libarchive:p
+            qrencode:p
+            tomlplusplus:p
+            cmark:p
+            zlib:p
+            extra-cmake-modules:p
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -G "Ninja" \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D Launcher_APP_BINARY_NAME=manisalauncher \
+            -D Launcher_BUILD_UPDATER=OFF \
+            -D Launcher_ENABLE_UPDATER=OFF
+
+      - name: Build Project
+        run: |
+          cmake --build build --config Release
+
+      - name: Package Windows Binary
+        run: |
+          cmake --install build --prefix install --config Release
+
+      - name: Upload ManisaLauncher Ready Folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: ManisaLauncher-Windows-x64
+          path: install/
