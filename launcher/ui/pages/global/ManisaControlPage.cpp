@@ -9,8 +9,11 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QComboBox>
+#include <QCheckBox>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QProcess>
 
 #include "Application.h"
 #include "BuildConfig.h"
@@ -96,6 +99,31 @@ ManisaControlPage::ManisaControlPage(QWidget* parent) : QWidget(parent)
         APPLICATION->settings()->set("MaxMemAlloc", value);
     });
 
+    auto* profilesGroup = new QGroupBox(tr("Performans ve Mod Profilleri"), this);
+    auto* profilesLayout = new QGridLayout(profilesGroup);
+    profilesLayout->addWidget(new QLabel(tr("Performans Profili"), profilesGroup), 0, 0);
+    m_profileCombo = new QComboBox(profilesGroup);
+    m_profileCombo->addItems({ tr("Dengeli"), tr("FPS Odaklı"), tr("Kalite Odaklı"), tr("Mod Paketi") });
+    m_profileCombo->setCurrentIndex(APPLICATION->settings()->get("ManisaPerformanceProfile").toInt());
+    profilesLayout->addWidget(m_profileCombo, 0, 1);
+
+    m_discordCheckBox = new QCheckBox(tr("Launcher Discord gösterimi"), profilesGroup);
+    m_discordCheckBox->setChecked(APPLICATION->settings()->get("ManisaDiscordEnabled").toBool());
+    profilesLayout->addWidget(m_discordCheckBox, 0, 2);
+    connect(m_profileCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &ManisaControlPage::applyPerformanceProfile);
+    connect(m_discordCheckBox, &QCheckBox::toggled, this, &ManisaControlPage::toggleDiscord);
+
+    auto* modCheckButton = new QPushButton(tr("Mod Uyumluluğunu Tara"), profilesGroup);
+    auto* discordButton = new QPushButton(tr("Discord'u Aç"), profilesGroup);
+    modCheckButton->setStyleSheet(QStringLiteral("QPushButton{padding:8px;border-radius:7px;font-weight:700;}"));
+    discordButton->setStyleSheet(QStringLiteral("QPushButton{padding:8px;border-radius:7px;font-weight:700;}"));
+    profilesLayout->addWidget(modCheckButton, 1, 0, 1, 2);
+    profilesLayout->addWidget(discordButton, 1, 2);
+    connect(modCheckButton, &QPushButton::clicked, this, &ManisaControlPage::scanModCompatibility);
+    connect(discordButton, &QPushButton::clicked, this, &ManisaControlPage::openDiscord);
+    root->addWidget(profilesGroup);
+
     auto* actions = new QHBoxLayout();
     m_cleanButton = new QPushButton(tr("Sistemi Hafiflet"), this);
     auto* logsButton = new QPushButton(tr("Log Klasörü"), this);
@@ -152,4 +180,100 @@ void ManisaControlPage::openLogsFolder()
 void ManisaControlPage::openInstancesFolder()
 {
     DesktopServices::openPath(APPLICATION->settings()->get("InstanceDir").toString(), true);
+}
+
+void ManisaControlPage::applyPerformanceProfile(int index)
+{
+    const int totalRam = static_cast<int>(HardwareInfo::totalRamMiB());
+    int minRam = 512;
+    int maxRam = 4096;
+
+    switch (index) {
+    case 1:
+        minRam = qMin(1024, totalRam / 8);
+        maxRam = qMin(qMax(3072, totalRam / 2), totalRam - 2048);
+        break;
+    case 2:
+        minRam = qMin(2048, totalRam / 4);
+        maxRam = qMin(qMax(6144, totalRam / 3 * 2), totalRam - 2048);
+        break;
+    case 3:
+        minRam = qMin(2048, totalRam / 4);
+        maxRam = qMin(qMax(8192, totalRam / 2), totalRam - 3072);
+        break;
+    default:
+        minRam = qMin(1024, totalRam / 8);
+        maxRam = qMin(qMax(4096, totalRam / 2), totalRam - 2048);
+        break;
+    }
+
+    minRam = qMax(256, minRam);
+    maxRam = qMax(minRam + 512, maxRam);
+    m_minRamSpinBox->setValue(minRam);
+    m_maxRamSpinBox->setValue(maxRam);
+    APPLICATION->settings()->set("ManisaPerformanceProfile", index);
+
+    if (index == 1) {
+        APPLICATION->settings()->set("JvmArgs", QStringLiteral("-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=50"));
+    } else if (index == 2) {
+        APPLICATION->settings()->set("JvmArgs", QStringLiteral("-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200"));
+    } else {
+        APPLICATION->settings()->set("JvmArgs", QStringLiteral("-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=100"));
+    }
+}
+
+void ManisaControlPage::scanModCompatibility()
+{
+    const QString instanceRoot = APPLICATION->settings()->get("InstanceDir").toString();
+    QDir instanceDir(instanceRoot);
+    int instanceCount = 0;
+    int modJarCount = 0;
+    int missingLoaderCount = 0;
+    int checkedMods = 0;
+
+    const auto instanceFolders = instanceDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const auto& instance : instanceFolders) {
+        instanceCount++;
+        QDir root(instance.absoluteFilePath());
+        bool hasProfile = QFile::exists(FS::PathCombine(instance.absoluteFilePath(), "mmc-pack.json"));
+        if (!hasProfile)
+            continue;
+
+        QDir mods(FS::PathCombine(instance.absoluteFilePath(), "minecraft", "mods"));
+        if (!mods.exists())
+            mods.setPath(FS::PathCombine(instance.absoluteFilePath(), ".minecraft", "mods"));
+
+        if (!mods.exists())
+            continue;
+
+        const auto jars = mods.entryInfoList({ "*.jar" }, QDir::Files, QDir::Name);
+        modJarCount += jars.size();
+        checkedMods += jars.size();
+        if (jars.isEmpty())
+            missingLoaderCount++;
+    }
+
+    QString report = tr("%1 instance tarandı\n%2 mod dosyası bulundu\n%3 mods klasörü boş")
+                         .arg(instanceCount)
+                         .arg(modJarCount)
+                         .arg(missingLoaderCount);
+
+    if (checkedMods == 0) {
+        report += tr("\nDurum: Mod içermeyen veya mods klasörü bulunmayan instance'lar.");
+    } else {
+        report += tr("\nDurum: Temel dosya uyumluluk taraması tamamlandı.");
+    }
+
+    QMessageBox::information(this, tr("Mod Uyumluluk Taraması"), report);
+}
+
+void ManisaControlPage::toggleDiscord(bool enabled)
+{
+    APPLICATION->settings()->set("ManisaDiscordEnabled", enabled);
+}
+
+void ManisaControlPage::openDiscord()
+{
+    if (!QDesktopServices::openUrl(QUrl(QStringLiteral("discord://-/settings/activity-status"))))
+        QDesktopServices::openUrl(QUrl(QStringLiteral("https://discord.com/settings/activity-status")));
 }

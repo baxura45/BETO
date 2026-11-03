@@ -5,7 +5,8 @@
 class QLabel;
 class QPushButton;
 class QSpinBox;
-class QGroupBox;
+class QComboBox;
+class QCheckBox;
 class ManisaControlPage : public QWidget
 {
     Q_OBJECT
@@ -17,6 +18,10 @@ private slots:
     void cleanLauncherFiles();
     void openLogsFolder();
     void openInstancesFolder();
+    void applyPerformanceProfile(int index);
+    void scanModCompatibility();
+    void openDiscord();
+    void toggleDiscord(bool enabled);
 
 private:
     QLabel* m_healthLabel = nullptr;
@@ -25,4 +30,6 @@ private:
     QPushButton* m_cleanButton = nullptr;
     QSpinBox* m_minRamSpinBox = nullptr;
     QSpinBox* m_maxRamSpinBox = nullptr;
+    QComboBox* m_profileCombo = nullptr;
+    QCheckBox* m_discordCheckBox = nullptr;
 };
