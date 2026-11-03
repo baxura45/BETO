@@ -485,7 +485,17 @@ QStringList MinecraftInstance::getClassPath()
 QString MinecraftInstance::getMainClass() const
 {
     auto profile = m_components->getProfile();
-    return profile->getMainClass();
+    auto mainClass = profile->getMainClass();
+    if (!mainClass.isEmpty()) {
+        return mainClass;
+    }
+    for (int i = 0; i < m_components->rowCount(); ++i) {
+        const auto& component = m_components->getComponent(i);
+        if (component->getID() == QLatin1String("net.minecraft") && component->getVersion().startsWith(QLatin1String("26.3"))) {
+            return QStringLiteral("net.minecraft.client.main.Main");
+        }
+    }
+    return mainClass;
 }
 
 QStringList MinecraftInstance::getNativeJars()
@@ -763,7 +773,20 @@ QProcessEnvironment MinecraftInstance::createLaunchEnvironment()
 QStringList MinecraftInstance::processMinecraftArgs(AuthSessionPtr session, MinecraftTarget::Ptr targetToJoin) const
 {
     auto profile = m_components->getProfile();
-    auto args = profile->getMinecraftArguments().split(' ', Qt::SkipEmptyParts);
+    auto minecraftArguments = profile->getMinecraftArguments();
+    if (minecraftArguments.isEmpty()) {
+        for (int i = 0; i < m_components->rowCount(); ++i) {
+            const auto& component = m_components->getComponent(i);
+            if (component->getID() == QLatin1String("net.minecraft") && component->getVersion().startsWith(QLatin1String("26.3"))) {
+                minecraftArguments =
+                    QStringLiteral("--username ${auth_player_name} --version ${version_name} --gameDir ${game_directory} "
+                                   "--assetsDir ${assets_root} --assetIndex ${assets_index_name} --uuid ${auth_uuid} "
+                                   "--accessToken ${auth_access_token} --versionType ${version_type}");
+                break;
+            }
+        }
+    }
+    auto args = minecraftArguments.split(' ', Qt::SkipEmptyParts);
     for (auto tweaker : profile->getTweakers()) {
         args << "--tweakClass" << tweaker;
     }

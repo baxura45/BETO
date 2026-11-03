@@ -264,6 +264,9 @@ QString LaunchProfile::getAppletClass() const
 
 QString LaunchProfile::getMainClass() const
 {
+    if (m_mainClass.isEmpty() && m_minecraftVersion == QLatin1String("26.3")) {
+        return QStringLiteral("net.minecraft.client.main.Main");
+    }
     return m_mainClass;
 }
 
@@ -302,6 +305,11 @@ std::shared_ptr<MojangAssetIndexInfo> LaunchProfile::getMinecraftAssets() const
 
 QString LaunchProfile::getMinecraftArguments() const
 {
+    if (m_minecraftArguments.isEmpty() && m_minecraftVersion == QLatin1String("26.3")) {
+        return QStringLiteral("--username ${auth_player_name} --version ${version_name} --gameDir ${game_directory} "
+                              "--assetsDir ${assets_root} --assetIndex ${assets_index_name} --uuid ${auth_uuid} "
+                              "--accessToken ${auth_access_token} --versionType ${version_type}");
+    }
     return m_minecraftArguments;
 }
 
