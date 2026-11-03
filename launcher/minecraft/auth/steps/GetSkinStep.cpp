@@ -15,6 +15,10 @@ QString GetSkinStep::describe()
 void GetSkinStep::perform()
 {
     QUrl url(m_data->minecraftProfile.skin.url);
+    if (url.isEmpty() && m_data->type == AccountType::Offline && !m_data->minecraftProfile.name.isEmpty()) {
+        url = QUrl(QString("https://minotar.net/skin/%1").arg(QString(QUrl::toPercentEncoding(m_data->minecraftProfile.name))));
+        m_data->minecraftProfile.skin.url = url.toString();
+    }
 
     auto [request, response] = Net::Request::makeByteArray(url);
     m_request = request;

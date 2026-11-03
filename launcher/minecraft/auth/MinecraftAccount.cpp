@@ -44,6 +44,7 @@
 #include <QJsonObject>
 #include <QRegularExpression>
 #include <QStringList>
+#include <QUrl>
 #include <QUuid>
 
 #include <QDebug>
@@ -85,6 +86,7 @@ MinecraftAccountPtr MinecraftAccount::createOffline(const QString& username)
     account->data.yggdrasilToken.extra["clientToken"] = QUuid::createUuid().toString(QUuid::Id128);
     account->data.minecraftProfile.id = uuidFromUsername(username).toString(QUuid::Id128);
     account->data.minecraftProfile.name = username;
+    account->data.minecraftProfile.skin.url = QString("https://minotar.net/skin/%1").arg(QString(QUrl::toPercentEncoding(username)));
     account->data.minecraftProfile.validity = Validity::Certain;
     return account;
 }
