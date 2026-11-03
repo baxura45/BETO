@@ -111,6 +111,7 @@ JavaSettingsWidget::JavaSettingsWidget(MinecraftInstance* instance, QWidget* par
     connect(m_ui->javaTestBtn, &QPushButton::clicked, this, &JavaSettingsWidget::onJavaTest);
     connect(m_ui->javaDetectBtn, &QPushButton::clicked, this, &JavaSettingsWidget::onJavaAutodetect);
     connect(m_ui->javaBrowseBtn, &QPushButton::clicked, this, &JavaSettingsWidget::onJavaBrowse);
+    connect(m_ui->manisaOptimizeButton, &QPushButton::clicked, this, &JavaSettingsWidget::onManisaOptimize);
 
     connect(m_ui->maxMemSpinBox, &QSpinBox::valueChanged, this, &JavaSettingsWidget::updateThresholds);
     connect(m_ui->minMemSpinBox, &QSpinBox::valueChanged, this, &JavaSettingsWidget::updateThresholds);
@@ -122,6 +123,50 @@ JavaSettingsWidget::JavaSettingsWidget(MinecraftInstance* instance, QWidget* par
 JavaSettingsWidget::~JavaSettingsWidget()
 {
     delete m_ui;
+}
+
+void JavaSettingsWidget::onManisaOptimize()
+{
+    const auto totalMemoryMiB = HardwareInfo::totalRamMiB();
+    if (totalMemoryMiB < 4096) {
+        CustomMessageBox::selectable(this, tr("Manisa RAM Optimizer"),
+                                     tr("En az 4 GB toplam RAM bulunamadı veya sistem belleği okunamadı."),
+                                     QMessageBox::Warning, QMessageBox::Ok, QMessageBox::Ok)
+            ->exec();
+        return;
+    }
+
+    int maximumMiB;
+    if (totalMemoryMiB >= 32768) {
+        maximumMiB = 12288;
+    } else if (totalMemoryMiB >= 16384) {
+        maximumMiB = 6144;
+    } else if (totalMemoryMiB >= 8192) {
+        maximumMiB = 4096;
+    } else {
+        maximumMiB = 2048;
+    }
+
+    const int minimumMiB = qMax(512, maximumMiB / 2);
+    m_ui->memoryGroupBox->setChecked(true);
+    m_ui->minMemSpinBox->setValue(minimumMiB);
+    m_ui->maxMemSpinBox->setValue(maximumMiB);
+    m_ui->javaArgumentsGroupBox->setChecked(true);
+    m_ui->jvmArgsTextBox->setPlainText(
+        QStringLiteral("-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 "
+                       "-XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch "
+                       "-XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M "
+                       "-XX:G1ReservePercent=20 -XX:InitiatingHeapOccupancyPercent=15 "
+                       "-Dsun.rmi.dgc.server.gcInterval=2147483646"));
+
+    CustomMessageBox::selectable(this, tr("Manisa RAM Optimizer"),
+                                 tr("Toplam bellek: %1 GB\nMinecraft RAM: %2 GB - %3 GB\n"
+                                    "G1GC JVM ayarları otomatik uygulandı.\n\nKaydetmek için Tamam butonuna basın.")
+                                     .arg(totalMemoryMiB / 1024.0, 0, 'f', 1)
+                                     .arg(minimumMiB / 1024.0, 0, 'f', 1)
+                                     .arg(maximumMiB / 1024.0, 0, 'f', 1),
+                                 QMessageBox::Information, QMessageBox::Ok, QMessageBox::Ok)
+        ->exec();
 }
 
 void JavaSettingsWidget::setupPinnedJavaRows()

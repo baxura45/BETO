@@ -59,6 +59,7 @@ class JavaSettingsWidget : public QWidget {
     void saveSettings();
 
    private slots:
+    void onManisaOptimize();
     void onJavaBrowse();
     void onJavaAutodetect();
     void onJavaTest();
