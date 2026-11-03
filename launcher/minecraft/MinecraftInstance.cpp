@@ -1211,6 +1211,11 @@ LaunchTask* MinecraftInstance::createLaunchTask(AuthSessionPtr session, Minecraf
             process->appendStep(makeShared<TaskStepWrapper>(pptr, t));
         }
     } else {
+        // Offline launch can still use the network to repair missing game files.
+        // Authentication is not performed, but libraries and assets are refreshed.
+        for (auto t : createUpdateTask()) {
+            process->appendStep(makeShared<TaskStepWrapper>(pptr, t));
+        }
         process->appendStep(makeShared<EnsureOfflineLibraries>(pptr, this));
     }
 
