@@ -6,12 +6,15 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QCheckBox>
+#include <QGroupBox>
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QImage>
 #include <QLabel>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QTextStream>
 #include <QTableWidget>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -81,6 +84,41 @@ ManisaControlPage::ManisaControlPage(QWidget* parent) : QWidget(parent)
     actions->addWidget(logsButton);
     actions->addWidget(instancesButton);
     root->addLayout(actions);
+
+    auto* customization = new QHBoxLayout();
+    customization->setSpacing(10);
+
+    auto* pvpGroup = new QGroupBox(tr("Hazır PvP Ayarı"), this);
+    auto* pvpLayout = new QVBoxLayout(pvpGroup);
+    pvpLayout->addWidget(new QLabel(tr("FOV 99 • GUI Ölçeği 2 • Ekranı geri atan titreme kapalı • Otomatik koşma kapalı"), pvpGroup));
+    m_pvpPresetButton = new QPushButton(tr("Manisa PvP Ayarını Uygula"), pvpGroup);
+    m_pvpPresetButton->setStyleSheet(QStringLiteral("QPushButton{background:#10B981;color:#07110D;font-weight:800;padding:10px;border-radius:8px;}"));
+    pvpLayout->addWidget(m_pvpPresetButton);
+    connect(m_pvpPresetButton, &QPushButton::clicked, this, &ManisaControlPage::applyPvpPreset);
+    customization->addWidget(pvpGroup, 1);
+
+    auto* discordGroup = new QGroupBox(tr("Discord Rich Presence"), this);
+    auto* discordLayout = new QVBoxLayout(discordGroup);
+    m_discordEnabled = new QCheckBox(tr("Discord durumunu göster"), discordGroup);
+    m_discordNickname = new QCheckBox(tr("Minecraft nickini göster"), discordGroup);
+    m_discordServer = new QCheckBox(tr("Sunucu adını göster"), discordGroup);
+    m_discordPlaytime = new QCheckBox(tr("Oyun süresini göster"), discordGroup);
+    m_discordEnabled->setChecked(APPLICATION->settings()->get("DiscordPresenceEnabled").toBool());
+    m_discordNickname->setChecked(APPLICATION->settings()->get("DiscordPresenceNickname").toBool());
+    m_discordServer->setChecked(APPLICATION->settings()->get("DiscordPresenceServer").toBool());
+    m_discordPlaytime->setChecked(APPLICATION->settings()->get("DiscordPresencePlaytime").toBool());
+    discordLayout->addWidget(m_discordEnabled);
+    discordLayout->addWidget(m_discordNickname);
+    discordLayout->addWidget(m_discordServer);
+    discordLayout->addWidget(m_discordPlaytime);
+    for (auto* checkbox : { m_discordEnabled, m_discordNickname, m_discordServer, m_discordPlaytime }) {
+        connect(checkbox, &QCheckBox::toggled, this, &ManisaControlPage::saveDiscordSettings);
+    }
+    m_discordNickname->setEnabled(m_discordEnabled->isChecked());
+    m_discordServer->setEnabled(m_discordEnabled->isChecked());
+    m_discordPlaytime->setEnabled(m_discordEnabled->isChecked());
+    customization->addWidget(discordGroup, 1);
+    root->addLayout(customization);
 
     m_screenshots = new QTableWidget(this);
     m_screenshots->setColumnCount(3);
@@ -185,4 +223,74 @@ void ManisaControlPage::copySelectedScreenshot()
         QApplication::clipboard()->setImage(image);
         QMessageBox::information(this, tr("Manisa Galeri"), tr("Ekran görüntüsü panoya kopyalandı."));
     }
+}
+
+void ManisaControlPage::applyPvpPreset()
+{
+    const QMap<QString, QString> values = {
+        { "fov", "0.65" },
+        { "guiScale", "2" },
+        { "bobView", "false" },
+        { "autoJump", "false" },
+        { "pauseOnLostFocus", "false" },
+        { "attackIndicator", "2" },
+        { "advancedItemTooltips", "false" },
+        { "sensitivity", "0.5" }
+    };
+
+    int updated = 0;
+    QDir instancesDir(APPLICATION->settings()->get("InstanceDir").toString());
+    const auto instances = instancesDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const auto& instance : instances) {
+        const QString optionsPath = FS::PathCombine(instance.absoluteFilePath(), "minecraft", "options.txt");
+        QString content;
+
+        QFile options(optionsPath);
+        if (options.exists() && options.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream stream(&options);
+            while (!stream.atEnd()) {
+                const QString line = stream.readLine();
+                const int separator = line.indexOf(':');
+                if (separator > 0) {
+                    const QString key = line.left(separator);
+                    if (!values.contains(key)) {
+                        content += line + '\n';
+                    }
+                } else if (!line.isEmpty()) {
+                    content += line + '\n';
+                }
+            }
+            options.close();
+        }
+
+        if (!options.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+            continue;
+        }
+        QTextStream stream(&options);
+        if (!content.isEmpty()) {
+            stream << content;
+        }
+        for (auto it = values.cbegin(); it != values.cend(); ++it) {
+            stream << it.key() << ':' << it.value() << '\n';
+        }
+        options.close();
+        updated++;
+    }
+
+    APPLICATION->settings()->set("ManisaPvpPresetVersion", 1);
+    APPLICATION->settings()->set("ManisaPvpPresetFov", 99);
+    APPLICATION->settings()->set("ManisaPvpPresetGuiScale", 2);
+    QMessageBox::information(this, tr("Manisa PvP Ayarı"),
+                             tr("%1 instance için hazır ayar uygulandı.\nMinecraft bir sonraki açılışta bu ayarları kullanacak.").arg(updated));
+}
+
+void ManisaControlPage::saveDiscordSettings()
+{
+    APPLICATION->settings()->set("DiscordPresenceEnabled", m_discordEnabled->isChecked());
+    APPLICATION->settings()->set("DiscordPresenceNickname", m_discordNickname->isChecked());
+    APPLICATION->settings()->set("DiscordPresenceServer", m_discordServer->isChecked());
+    APPLICATION->settings()->set("DiscordPresencePlaytime", m_discordPlaytime->isChecked());
+    m_discordNickname->setEnabled(m_discordEnabled->isChecked());
+    m_discordServer->setEnabled(m_discordEnabled->isChecked());
+    m_discordPlaytime->setEnabled(m_discordEnabled->isChecked());
 }

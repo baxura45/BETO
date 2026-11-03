@@ -97,6 +97,7 @@
 #include "ui/dialogs/AboutDialog.h"
 #include "ui/pages/global/DiscoverServersPage.h"
 #include "ui/pages/global/ManisaAIChatPage.h"
+#include "ui/pages/global/ManisaControlPage.h"
 #include "ui/dialogs/CopyInstanceDialog.h"
 #include "ui/dialogs/CreateShortcutDialog.h"
 #include "ui/dialogs/CustomMessageBox.h"
@@ -338,6 +339,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
         m_homeTabs = new QTabWidget(ui->centralWidget);
         m_homeTabs->setObjectName(QStringLiteral("homeTabs"));
         m_homeTabs->addTab(view, tr("Instances"));
+        m_controlPage = new ManisaControlPage(m_homeTabs);
+        m_homeTabs->addTab(m_controlPage, tr("Manisa Merkezi"));
         ui->horizontalLayout->addWidget(m_homeTabs);
     }
     // The cat background
@@ -469,6 +472,9 @@ void MainWindow::retranslateUi()
         m_homeTabs->setTabText(m_homeTabs->indexOf(view), tr("Instances"));
         m_homeTabs->setTabText(m_homeTabs->indexOf(m_discoverPage), tr("Keşfet"));
         m_homeTabs->setTabText(m_homeTabs->indexOf(m_aiChatPage), tr("Manisa AI"));
+    }
+    if (m_homeTabs && m_controlPage) {
+        m_homeTabs->setTabText(m_homeTabs->indexOf(m_controlPage), tr("Manisa Merkezi"));
     }
 
     MinecraftAccountPtr defaultAccount = APPLICATION->accounts()->defaultAccount();

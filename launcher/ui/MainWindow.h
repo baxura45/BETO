@@ -61,6 +61,7 @@ class KonamiCode;
 class InstanceTask;
 class DiscoverServersPage;
 class ManisaAIChatPage;
+class ManisaControlPage;
 class QTabWidget;
 
 namespace Ui {
@@ -245,6 +246,7 @@ class MainWindow : public QMainWindow {
     QTabWidget* m_homeTabs = nullptr;
     DiscoverServersPage* m_discoverPage = nullptr;
     ManisaAIChatPage* m_aiChatPage = nullptr;
+    ManisaControlPage* m_controlPage = nullptr;
     InstanceProxyModel* proxymodel = nullptr;
     QLabel* m_statusCopyright = nullptr;
     QToolButton* newsLabel = nullptr;

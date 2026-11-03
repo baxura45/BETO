@@ -319,7 +319,8 @@ QString ThemeManager::addCatPack(std::unique_ptr<CatPack> catPack)
 
 void ThemeManager::initializeCatPacks()
 {
-    QList<std::pair<QString, QString>> defaultCats{ { "arcane-jinx", QObject::tr("Arcane Jinx") },
+    QList<std::pair<QString, QString>> defaultCats{ { "manisa-custom", QObject::tr("Manisa Özel Arka Plan") },
+                                                    { "arcane-jinx", QObject::tr("Arcane Jinx") },
                                                     { "manisa-cat", QObject::tr("Manisa Kedi") },
                                                     { "kitteh", QObject::tr("Background Cat (from MultiMC)") },
                                                     { "rory", QObject::tr("Rory ID 11 (drawn by Ashtaka)") },

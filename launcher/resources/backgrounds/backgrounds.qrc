@@ -1,6 +1,7 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
     <qresource prefix="/backgrounds">
+        <file alias="manisa-custom">manisa-custom.png</file>
         <file alias="arcane-jinx">arcane-jinx.png</file>
         <file alias="manisa-cat">manisa-cat.png</file>
         <file alias="kitteh">kitteh.png</file>
