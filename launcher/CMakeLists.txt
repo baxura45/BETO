@@ -926,6 +926,8 @@ SET(LAUNCHER_SOURCES
     # GUI - global settings pages
     ui/pages/global/DiscoverServersPage.cpp
     ui/pages/global/DiscoverServersPage.h
+    ui/pages/global/ManisaControlPage.cpp
+    ui/pages/global/ManisaControlPage.h
     ui/pages/global/ManisaAIChatPage.cpp
     ui/pages/global/ManisaAIChatPage.h
     ui/pages/global/AccountListPage.cpp

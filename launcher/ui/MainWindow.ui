@@ -251,7 +251,7 @@
     <iconset theme="cat"/>
    </property>
    <property name="text">
-    <string>&amp;Meow</string>
+    <string>Manisa</string>
    </property>
    <property name="toolTip">
     <string>It's a fluffy kitty :3</string>

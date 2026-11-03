@@ -103,6 +103,28 @@ QPixmap MinecraftAccount::getFace(int width, int height) const
 {
     QPixmap skinTexture;
     if (!skinTexture.loadFromData(data.minecraftProfile.skin.data, "PNG")) {
+        if (data.type == AccountType::Offline && !data.minecraftProfile.name.isEmpty()) {
+            QPixmap face(width, height);
+            face.fill(QColorConstants::Transparent);
+            QPainter painter(&face);
+            painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+
+            const QString name = data.minecraftProfile.name.toLower();
+            const uint hash = QCryptographicHash::hash(name.toUtf8(), QCryptographicHash::Md5)[0];
+            QColor base((hash * 29) % 160 + 45, (hash * 47) % 160 + 45, (hash * 71) % 160 + 45);
+            QColor hair(base.darker(180));
+            QColor eyes(QColorConstants::White);
+
+            painter.fillRect(face.rect(), QColorConstants::Transparent);
+            painter.fillRect(4, 4, width - 8, height - 8, base);
+            painter.fillRect(4, 4, width - 8, height / 5, hair);
+            painter.fillRect(4, height / 2 - 1, width / 5, height / 8, hair);
+            painter.fillRect(width - width / 4 - 4, height / 2 - 1, width / 5, height / 8, hair);
+            painter.fillRect(width / 4, height / 2, 3, 3, eyes);
+            painter.fillRect(width - width / 4 - 3, height / 2, 3, 3, eyes);
+            painter.fillRect(width / 2 - 4, height - height / 4, 8, 3, hair);
+            return face.scaled(width, height, Qt::KeepAspectRatio, Qt::FastTransformation);
+        }
         return QPixmap();
     }
     QPixmap skin = QPixmap(8, 8);

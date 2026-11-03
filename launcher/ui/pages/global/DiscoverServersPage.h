@@ -22,10 +22,15 @@
 
 #include "tasks/ConcurrentTask.h"
 
+#include <QVector>
+
 class QLabel;
 class QPushButton;
 class QTableWidget;
 class QTimer;
+class QComboBox;
+class QNetworkAccessManager;
+class QNetworkReply;
 
 class DiscoverServersPage : public QWidget {
     Q_OBJECT
@@ -40,10 +45,16 @@ class DiscoverServersPage : public QWidget {
    private:
     void populateRows();
     void applyRowStatus(int row, bool online, int players, int maxPlayers, int pingMs, const QString& motd);
+    void parseVoteCatalog(const QByteArray& html);
+    void startServerPing();
+    void hideRowsBelowThreshold();
 
     QTableWidget* m_table = nullptr;
     QPushButton* m_refreshButton = nullptr;
     QLabel* m_statusLabel = nullptr;
     QTimer* m_autoRefresh = nullptr;
+    QComboBox* m_regionFilter = nullptr;
     ConcurrentTask::Ptr m_queryTask;
+    QNetworkAccessManager* m_network = nullptr;
+    QVector<QList<QString>> m_dynamicServers;
 };

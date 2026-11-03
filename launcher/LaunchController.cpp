@@ -130,13 +130,24 @@ void LaunchController::decideAccount()
 
 LaunchDecision LaunchController::decideLaunchMode()
 {
-    if (!m_accountToUse || m_wantedLaunchMode == LaunchMode::Demo) {
-        m_actualLaunchMode = LaunchMode::Demo;
+    if (m_wantedLaunchMode == LaunchMode::Demo) {
+        m_actualLaunchMode = LaunchMode::Offline;
+        return LaunchDecision::Continue;
+    }
+
+    if (!m_accountToUse) {
+        m_accountToUse = MinecraftAccount::createOffline("Player");
+        m_actualLaunchMode = LaunchMode::Offline;
         return LaunchDecision::Continue;
     }
 
     const auto* accounts = APPLICATION->accounts();
     MinecraftAccountPtr accountToCheck = nullptr;
+
+    if (m_accountToUse->accountType() == AccountType::Offline) {
+        m_actualLaunchMode = LaunchMode::Offline;
+        return LaunchDecision::Continue;
+    }
 
     if (m_accountToUse->accountType() != AccountType::Offline) {
         accountToCheck = m_accountToUse->ownsMinecraft() ? m_accountToUse : nullptr;
@@ -290,19 +301,7 @@ void LaunchController::login()
     }
 
     if (m_actualLaunchMode == LaunchMode::Demo) {
-        if (m_wantedLaunchMode == LaunchMode::Demo || askPlayDemo()) {
-            bool ok = false;
-            auto name = askOfflineName("Player", &ok);
-            if (ok) {
-                m_session = std::make_shared<AuthSession>();
-                m_session->MakeDemo(name, MinecraftAccount::uuidFromUsername(name).toString(QUuid::Id128));
-                launchInstance();
-                return;
-            }
-        }
-
-        emitFailed(tr("No account selected for launch"));
-        return;
+        m_actualLaunchMode = LaunchMode::Offline;
     }
 
     m_session = std::make_shared<AuthSession>();

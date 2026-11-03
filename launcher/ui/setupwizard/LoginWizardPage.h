@@ -18,6 +18,8 @@ class LoginWizardPage : public BaseWizardPage {
     void retranslate() override;
    private slots:
     void on_pushButton_clicked();
+    void on_offlinePushButton_clicked();
+    void on_skipPushButton_clicked();
 
    private:
     Ui::LoginWizardPage* ui;

@@ -17,7 +17,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt; font-weight:600;&quot;&gt;Add Microsoft account&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt; font-weight:600;&quot;&gt;Hesap Seçimi&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="textFormat">
       <enum>Qt::RichText</enum>
@@ -30,7 +30,7 @@
    <item>
     <widget class="QLabel" name="label_2">
      <property name="text">
-      <string>In order to play Minecraft, you must have at least one Microsoft account logged in. Do you want to log in now?</string>
+       <string>Çevrimiçi Minecraft hesabınızla giriş yapabilir veya Internet bağlantısı olmasa bile oynamak için çevrimdışı hesap oluşturabilirsiniz. Hesap eklemek istemiyorsanız Atla seçeneğini kullanın.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -47,10 +47,24 @@
    <item>
     <widget class="QPushButton" name="pushButton">
      <property name="text">
-      <string>Add Microsoft account</string>
+       <string>Çevrimiçi Hesapla Oyna</string>
      </property>
     </widget>
    </item>
+    <item>
+     <widget class="QPushButton" name="offlinePushButton">
+      <property name="text">
+       <string>Çevrimdışı Hesapla Oyna</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="skipPushButton">
+      <property name="text">
+       <string>Atla - Hesabı Sonra Ekle</string>
+      </property>
+     </widget>
+    </item>
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">

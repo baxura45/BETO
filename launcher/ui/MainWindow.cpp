@@ -338,10 +338,6 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
         m_homeTabs = new QTabWidget(ui->centralWidget);
         m_homeTabs->setObjectName(QStringLiteral("homeTabs"));
         m_homeTabs->addTab(view, tr("Instances"));
-        m_discoverPage = new DiscoverServersPage(m_homeTabs);
-        m_homeTabs->addTab(m_discoverPage, tr("Keşfet"));
-        m_aiChatPage = new ManisaAIChatPage(m_homeTabs);
-        m_homeTabs->addTab(m_aiChatPage, tr("Manisa AI"));
         ui->horizontalLayout->addWidget(m_homeTabs);
     }
     // The cat background
@@ -783,7 +779,7 @@ void MainWindow::defaultAccountChanged()
     }
 
     // Set the icon to the "no account" icon.
-    ui->actionAccountsButton->setIcon(QIcon::fromTheme("noaccount"));
+    ui->actionAccountsButton->setIcon(QIcon::fromTheme("minecraft"));
     ui->actionAccountsButton->setText(tr("Accounts"));
 }
 
@@ -852,16 +848,12 @@ void MainWindow::setCatBackground(bool enabled)
 void MainWindow::updateCatState()
 {
     SettingsObject* settings = APPLICATION->settings();
-    const bool catEnabled = settings->get("EnableCat").toBool();
-    bool catVisible = settings->get("TheCat").toBool();
-    if (!catEnabled && catVisible) {
-        settings->set("TheCat", false);
-        catVisible = false;
-    }
-
-    ui->actionCAT->setVisible(catEnabled);
-    ui->actionCAT->setChecked(catVisible);
-    setCatBackground(catVisible);
+    settings->set("EnableCat", false);
+    settings->set("TheCat", false);
+    ui->actionCAT->setVisible(false);
+    ui->actionCAT->setEnabled(false);
+    ui->actionCAT->setChecked(false);
+    setCatBackground(false);
 }
 
 void MainWindow::runModalTask(Task* task)

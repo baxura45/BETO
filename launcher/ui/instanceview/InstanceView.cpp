@@ -40,6 +40,9 @@
 #include <QCache>
 #include <QDrag>
 #include <QFont>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QListView>
 #include <QMimeData>
 #include <QMouseEvent>
@@ -49,6 +52,7 @@
 #include <QtMath>
 
 #include "VisualGroup.h"
+#include "FileSystem.h"
 #include "ui/themes/CatPainter.h"
 #include "ui/themes/ThemeManager.h"
 
@@ -457,44 +461,11 @@ void InstanceView::paintEvent([[maybe_unused]] QPaintEvent* event)
     option.widget = this;
 
     if (model()->rowCount() == 0) {
-        painter.save();
-        QString emptyString = tr("Welcome!") + "\n" + tr("Click \"Add Instance\" to get started.");
-
-        // calculate the rect for the overlay
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        QFont font("sans", 20);
-        font.setBold(true);
-
         QRect bounds = viewport()->geometry();
         bounds.moveTop(0);
-        auto innerBounds = bounds;
-        innerBounds.adjust(10, 10, -10, -10);
-
-        QColor background = QApplication::palette().color(QPalette::WindowText);
-        QColor foreground = QApplication::palette().color(QPalette::Base);
-        foreground.setAlpha(190);
-        painter.setFont(font);
-        auto fontMetrics = painter.fontMetrics();
-        auto textRect = fontMetrics.boundingRect(innerBounds, Qt::AlignHCenter | Qt::TextWordWrap, emptyString);
-        textRect.moveCenter(bounds.center());
-
-        auto wrapRect = textRect;
-        wrapRect.adjust(-10, -10, 10, 10);
-
-        // check if we are allowed to draw in our area
-        if (!event->rect().intersects(wrapRect)) {
+        if (!event->rect().intersects(bounds)) {
             return;
         }
-
-        painter.setBrush(QBrush(background));
-        painter.setPen(foreground);
-        painter.drawRoundedRect(wrapRect, 5.0, 5.0);
-
-        painter.setPen(foreground);
-        painter.setFont(font);
-        painter.drawText(textRect, Qt::AlignHCenter | Qt::TextWordWrap, emptyString);
-
-        painter.restore();
         return;
     }
 
@@ -651,6 +622,43 @@ void InstanceView::dropEvent(QDropEvent* event)
     if (mimedata->hasUrls()) {
         auto urls = mimedata->urls();
         event->accept();
+
+        const QPoint dropPoint = event->position().toPoint();
+        QModelIndex targetIndex = indexAt(dropPoint);
+        if (targetIndex.isValid()) {
+            auto* instance =
+                static_cast<MinecraftInstance*>(targetIndex.data(InstanceList::InstancePointerRole).value<void*>());
+            if (instance) {
+                QList<QUrl> remainingUrls;
+                const QString modsPath = FS::PathCombine(instance->gameRoot(), "mods");
+                QDir().mkpath(modsPath);
+
+                for (const auto& url : urls) {
+                    if (!url.isLocalFile()) {
+                        remainingUrls.append(url);
+                        continue;
+                    }
+
+                    const QFileInfo source(url.toLocalFile());
+                    const QString lowerName = source.fileName().toLower();
+                    if (!lowerName.endsWith(QStringLiteral(".jar")) &&
+                        !lowerName.endsWith(QStringLiteral(".jar.disabled"))) {
+                        remainingUrls.append(url);
+                        continue;
+                    }
+
+                    const QString destination = FS::PathCombine(modsPath, source.fileName());
+                    QFile::remove(destination);
+                    QFile::copy(source.absoluteFilePath(), destination);
+                }
+
+                if (!remainingUrls.isEmpty()) {
+                    emit droppedURLs(remainingUrls);
+                }
+                return;
+            }
+        }
+
         emit droppedURLs(urls);
     }
 }

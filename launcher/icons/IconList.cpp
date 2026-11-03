@@ -435,7 +435,7 @@ QIcon IconList::getIcon(const QString& key) const
         return m_icons[iconIndex].icon();
 
     // Fallback for icons that don't exist.b
-    iconIndex = getIconIndex("grass");
+    iconIndex = getIconIndex("minecraft");
 
     if (iconIndex != -1)
         return m_icons[iconIndex].icon();

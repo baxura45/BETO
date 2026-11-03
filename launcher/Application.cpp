@@ -651,7 +651,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         // Theming
         m_settings->registerSetting("IconTheme", QString());
         m_settings->registerSetting("ApplicationTheme", "manisa-dark");
-        m_settings->registerSetting("BackgroundCat", QString("kitteh"));
+        m_settings->registerSetting("BackgroundCat", QString());
 
         // Remembered state
         m_settings->registerSetting("LastUsedGroupForNewInstance", QString());
@@ -809,7 +809,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         m_settings->registerSetting({ "PostExitCommand", "PostExitCmd" }, "");
 
         // The cat
-        m_settings->registerSetting("EnableCat", true);
+        m_settings->registerSetting("EnableCat", false);
         m_settings->registerSetting("TheCat", false);
         m_settings->registerSetting("CatOpacity", 100);
         m_settings->registerSetting("CatFit", "fit");
@@ -1269,9 +1269,8 @@ bool Application::createSetupWizard()
     bool pasteInterventionRequired = settings()->get("PastebinURL") != "";
     bool validWidgets = m_themeManager->isValidApplicationTheme(settings()->get("ApplicationTheme").toString());
     bool validIcons = m_themeManager->isValidIconTheme(settings()->get("IconTheme").toString());
-    bool login = !m_accounts->anyAccountIsValid() && (capabilities().testAnyFlags(Application::SupportsMSA));
     bool themeInterventionRequired = !validWidgets || !validIcons;
-    bool wizardRequired = javaRequired || languageRequired || pasteInterventionRequired || themeInterventionRequired || askjava || login;
+    bool wizardRequired = javaRequired || languageRequired || pasteInterventionRequired || themeInterventionRequired || askjava;
     if (wizardRequired) {
         const bool darkMode = QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark;
         // set default theme after going into theme wizard
@@ -1317,9 +1316,10 @@ bool Application::createSetupWizard()
             setupWizard.addPage(new ThemeWizardPage(&setupWizard));
         }
 
-        if (login) {
+        if (m_accounts && m_accounts->count() == 0) {
             setupWizard.addPage(new LoginWizardPage(&setupWizard));
         }
+
         if (setupWizard.exec() != QDialog::Accepted) {
             qWarning() << "Setup wizard was not completed; continuing with the current settings";
         }
