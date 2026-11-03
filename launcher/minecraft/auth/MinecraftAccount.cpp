@@ -104,7 +104,8 @@ QPixmap MinecraftAccount::getFace(int width, int height) const
     QPixmap skinTexture;
     if (!skinTexture.loadFromData(data.minecraftProfile.skin.data, "PNG")) {
         if (data.type == AccountType::Offline && !data.minecraftProfile.name.isEmpty()) {
-            QPixmap face(width, height);
+            const int sourceSize = 8;
+            QPixmap face(sourceSize, sourceSize);
             face.fill(QColorConstants::Transparent);
             QPainter painter(&face);
             painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
@@ -116,23 +117,33 @@ QPixmap MinecraftAccount::getFace(int width, int height) const
             QColor eyes(QColorConstants::White);
 
             painter.fillRect(face.rect(), QColorConstants::Transparent);
-            painter.fillRect(4, 4, width - 8, height - 8, base);
-            painter.fillRect(4, 4, width - 8, height / 5, hair);
-            painter.fillRect(4, height / 2 - 1, width / 5, height / 8, hair);
-            painter.fillRect(width - width / 4 - 4, height / 2 - 1, width / 5, height / 8, hair);
-            painter.fillRect(width / 4, height / 2, 3, 3, eyes);
-            painter.fillRect(width - width / 4 - 3, height / 2, 3, 3, eyes);
-            painter.fillRect(width / 2 - 4, height - height / 4, 8, 3, hair);
-            return face.scaled(width, height, Qt::KeepAspectRatio, Qt::FastTransformation);
+            painter.fillRect(1, 1, 6, 6, base);
+            painter.fillRect(1, 1, 6, 1, hair);
+            painter.fillRect(1, 1, 1, 4, hair);
+            painter.fillRect(6, 1, 1, 4, hair);
+            painter.fillRect(2, 4, 1, 1, eyes);
+            painter.fillRect(5, 4, 1, 1, eyes);
+            painter.fillRect(2, 6, 4, 1, hair);
+            painter.end();
+
+            return face.scaled(width, height, Qt::IgnoreAspectRatio, Qt::FastTransformation);
         }
         return QPixmap();
     }
-    QPixmap skin = QPixmap(8, 8);
+    if (skinTexture.width() < 64 || skinTexture.height() < 32) {
+        return QPixmap();
+    }
+
+    QPixmap skin(8, 8);
     skin.fill(QColorConstants::Transparent);
     QPainter painter(&skin);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
     painter.drawPixmap(0, 0, skinTexture.copy(8, 8, 8, 8));
     painter.drawPixmap(0, 0, skinTexture.copy(40, 8, 8, 8));
-    return skin.scaled(width, height, Qt::KeepAspectRatio);
+    painter.end();
+
+    return skin.scaled(width, height, Qt::IgnoreAspectRatio, Qt::FastTransformation);
 }
 
 shared_qobject_ptr<AuthFlow> MinecraftAccount::login(bool useDeviceCode)
