@@ -66,6 +66,10 @@ void ModMinecraftJar::executeTask()
     auto jarMods = m_inst->getJarMods();
     if (jarMods.size()) {
         auto mainJar = profile->getMainJar();
+        if (!mainJar) {
+            emitFailed(tr("The main Minecraft jar is missing from the launch metadata."));
+            return;
+        }
         QStringList jars, temp1, temp2, temp3, temp4;
         mainJar->getApplicableFiles(m_inst->runtimeContext(), jars, temp1, temp2, temp3, m_inst->getLocalLibraryPath());
         auto sourceJarPath = jars[0];

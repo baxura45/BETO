@@ -28,8 +28,8 @@ void LibrariesTask::executeTask()
     auto processArtifactPool = [this, inst, metacache](const QList<LibraryPtr>& pool, QStringList& errors, const QString& localPath) {
         for (auto lib : pool) {
             if (!lib) {
-                emitFailed(tr("Null jar is specified in the metadata, aborting."));
-                return false;
+                qWarning() << "Skipping null library entry in launch metadata";
+                continue;
             }
             auto dls = lib->getDownloads(inst->runtimeContext(), metacache, errors, localPath);
             for (auto dl : dls) {
@@ -47,7 +47,9 @@ void LibrariesTask::executeTask()
     for (const auto& agent : profile->getAgents()) {
         libArtifactPool.append(agent.library);
     }
-    libArtifactPool.append(profile->getMainJar());
+    if (auto mainJar = profile->getMainJar()) {
+        libArtifactPool.append(mainJar);
+    }
     processArtifactPool(libArtifactPool, failedLocalLibraries, inst->getLocalLibraryPath());
 
     QStringList failedLocalJarMods;
