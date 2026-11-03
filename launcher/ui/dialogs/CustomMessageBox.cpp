@@ -14,6 +14,7 @@
  */
 
 #include "CustomMessageBox.h"
+#include "Application.h"
 
 namespace CustomMessageBox {
 QMessageBox* selectable(QWidget* parent,
@@ -25,6 +26,7 @@ QMessageBox* selectable(QWidget* parent,
                         QCheckBox* checkBox)
 {
     QMessageBox* messageBox = new QMessageBox(parent);
+    messageBox->setWindowIcon(APPLICATION->logo());
     messageBox->setWindowTitle(title);
     messageBox->setText(text);
     messageBox->setStandardButtons(buttons);
