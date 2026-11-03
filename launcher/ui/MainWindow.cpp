@@ -153,6 +153,8 @@ QString profileInUseFilter(const QString& profile, bool used)
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    resize(1280, 720);
+    setMinimumSize(960, 600);
 
     setWindowIcon(APPLICATION->logo());
     setWindowTitle(APPLICATION->applicationDisplayName());

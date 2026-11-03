@@ -87,6 +87,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <QScreen>
 
 #include <QAccessible>
 #include <QCommandLineParser>
@@ -1718,6 +1719,17 @@ MainWindow* Application::showMainWindow(bool minimized)
         m_mainWindow = new MainWindow();
         m_mainWindow->restoreState(QByteArray::fromBase64(APPLICATION->settings()->get("MainWindowState").toString().toUtf8()));
         m_mainWindow->restoreGeometry(QByteArray::fromBase64(APPLICATION->settings()->get("MainWindowGeometry").toString().toUtf8()));
+
+        const auto savedSize = m_mainWindow->size();
+        const auto screenGeometry = QGuiApplication::primaryScreen()->availableGeometry();
+        const bool usableSize = savedSize.width() >= 960 && savedSize.height() >= 600;
+        const bool visibleOnScreen = screenGeometry.intersects(m_mainWindow->frameGeometry());
+        if (!usableSize || !visibleOnScreen) {
+            m_mainWindow->resize(1280, 720);
+            m_mainWindow->move(screenGeometry.center() - m_mainWindow->rect().center());
+            APPLICATION->settings()->set("MainWindowState", "");
+            APPLICATION->settings()->set("MainWindowGeometry", "");
+        }
 
         if (minimized) {
             m_mainWindow->showMinimized();
