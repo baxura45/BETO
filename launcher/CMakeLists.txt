@@ -852,6 +852,8 @@ SET(LAUNCHER_SOURCES
     ui/themes/CustomTheme.h
     ui/themes/DarkTheme.cpp
     ui/themes/DarkTheme.h
+    ui/themes/ManisaDarkTheme.cpp
+    ui/themes/ManisaDarkTheme.h
     ui/themes/ITheme.cpp
     ui/themes/ITheme.h
     ui/themes/HintOverrideProxyStyle.cpp
@@ -922,6 +924,10 @@ SET(LAUNCHER_SOURCES
     ui/pages/instance/ServerPingTask.h
 
     # GUI - global settings pages
+    ui/pages/global/DiscoverServersPage.cpp
+    ui/pages/global/DiscoverServersPage.h
+    ui/pages/global/ManisaAIChatPage.cpp
+    ui/pages/global/ManisaAIChatPage.h
     ui/pages/global/AccountListPage.cpp
     ui/pages/global/AccountListPage.h
     ui/pages/global/ExternalToolsPage.cpp

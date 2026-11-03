@@ -106,6 +106,11 @@ QString DarkTheme::appStyleSheet()
         "QToolButton { background-color: transparent; border: 1px solid transparent; border-radius: 6px; padding: 6px; color: #F0F6FC; }"
         "QToolButton:hover { background-color: #21262D; border: 1px solid #30363D; color: #10B981; }"
         "QToolButton:pressed { background-color: #30363D; }"
+        "QPushButton[default=\"true\"] {"
+        "    background-color: #10B981; color: #0D1117; border: 1px solid #34D399; border-radius: 8px; font-weight: 700;"
+        "}"
+        "QPushButton[default=\"true\"]:hover { background-color: #34D399; border: 1px solid #6EE7B7; }"
+        "QPlainTextEdit, QTextEdit { font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace; }"
     );
 }
 

@@ -1,4 +1,6 @@
-#include <QFutureWatcher>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
 
 #include <Json.h>
 #include "McClient.h"
@@ -16,11 +18,42 @@ unsigned getOnlinePlayers(const QJsonObject& data)
     }
     return res.value();
 }
+
+int getMaxPlayers(const QJsonObject& data)
+{
+    const auto players = data.value(QStringLiteral("players")).toObject();
+    return players.value(QStringLiteral("max")).toInt(-1);
+}
+
+QString flattenMotd(const QJsonValue& value)
+{
+    if (value.isString()) {
+        return value.toString();
+    }
+    if (value.isArray()) {
+        QString out;
+        for (const auto& part : value.toArray()) {
+            out += flattenMotd(part);
+        }
+        return out;
+    }
+    if (value.isObject()) {
+        const auto obj = value.toObject();
+        QString out = obj.value(QStringLiteral("text")).toString();
+        const auto extra = obj.value(QStringLiteral("extra"));
+        if (extra.isArray()) {
+            out += flattenMotd(extra);
+        }
+        return out;
+    }
+    return {};
+}
 }  // namespace
 
 void ServerPingTask::executeTask()
 {
     qDebug() << "Querying status of" << QString("%1:%2").arg(m_domain).arg(m_port);
+    m_timer.start();
 
     // Resolve the actual IP and port for the server
     McResolver* resolver = new McResolver(nullptr, m_domain, m_port);
@@ -32,6 +65,9 @@ void ServerPingTask::executeTask()
 
         connect(client, &McClient::succeeded, this, [this](QJsonObject data) {
             m_outputOnlinePlayers = getOnlinePlayers(data);
+            m_outputMaxPlayers = getMaxPlayers(data);
+            m_outputDescription = flattenMotd(data.value(QStringLiteral("description"))).simplified();
+            m_outputPingMs = static_cast<int>(m_timer.elapsed());
             qDebug() << "Online players:" << m_outputOnlinePlayers;
             emitSucceeded();
         });

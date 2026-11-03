@@ -59,6 +59,9 @@ class BaseProfilerFactory;
 class InstanceView;
 class KonamiCode;
 class InstanceTask;
+class DiscoverServersPage;
+class ManisaAIChatPage;
+class QTabWidget;
 
 namespace Ui {
 class MainWindow;
@@ -239,7 +242,11 @@ class MainWindow : public QMainWindow {
     Ui::MainWindow* ui;
     // these are managed by Qt's memory management model!
     InstanceView* view = nullptr;
+    QTabWidget* m_homeTabs = nullptr;
+    DiscoverServersPage* m_discoverPage = nullptr;
+    ManisaAIChatPage* m_aiChatPage = nullptr;
     InstanceProxyModel* proxymodel = nullptr;
+    QLabel* m_statusCopyright = nullptr;
     QToolButton* newsLabel = nullptr;
     QLabel* m_statusLeft = nullptr;
     QLabel* m_statusCenter = nullptr;

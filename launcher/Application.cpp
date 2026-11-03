@@ -650,7 +650,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
 
         // Theming
         m_settings->registerSetting("IconTheme", QString());
-        m_settings->registerSetting("ApplicationTheme", "dark");
+        m_settings->registerSetting("ApplicationTheme", "manisa-dark");
         m_settings->registerSetting("BackgroundCat", QString("kitteh"));
 
         // Remembered state
@@ -1289,7 +1289,7 @@ bool Application::createSetupWizard()
 #if defined(Q_OS_LINUX)
             const QString style = "system";
 #else
-            const QString style = darkMode ? QStringLiteral("dark") : QStringLiteral("bright");
+            const QString style = darkMode ? QStringLiteral("manisa-dark") : QStringLiteral("bright");
 
 #endif
 

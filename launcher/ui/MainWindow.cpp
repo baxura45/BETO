@@ -68,6 +68,7 @@
 #include <QProgressDialog>
 #include <QShortcut>
 #include <QStatusBar>
+#include <QTabWidget>
 #include <QTextEdit>
 #include <QToolBar>
 #include <QToolButton>
@@ -94,6 +95,8 @@
 #include "InstanceWindow.h"
 
 #include "ui/dialogs/AboutDialog.h"
+#include "ui/pages/global/DiscoverServersPage.h"
+#include "ui/pages/global/ManisaAIChatPage.h"
 #include "ui/dialogs/CopyInstanceDialog.h"
 #include "ui/dialogs/CreateShortcutDialog.h"
 #include "ui/dialogs/CustomMessageBox.h"
@@ -331,7 +334,15 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
         view->setSourceOfGroupCollapseStatus(
             [](const QString& groupName) -> bool { return APPLICATION->instances()->isGroupCollapsed(groupName); });
         connect(view, &InstanceView::groupStateChanged, APPLICATION->instances(), &InstanceList::on_GroupStateChanged);
-        ui->horizontalLayout->addWidget(view);
+
+        m_homeTabs = new QTabWidget(ui->centralWidget);
+        m_homeTabs->setObjectName(QStringLiteral("homeTabs"));
+        m_homeTabs->addTab(view, tr("Instances"));
+        m_discoverPage = new DiscoverServersPage(m_homeTabs);
+        m_homeTabs->addTab(m_discoverPage, tr("Keşfet"));
+        m_aiChatPage = new ManisaAIChatPage(m_homeTabs);
+        m_homeTabs->addTab(m_aiChatPage, tr("Manisa AI"));
+        ui->horizontalLayout->addWidget(m_homeTabs);
     }
     // The cat background
     {
@@ -374,8 +385,13 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     m_statusLeft = new QLabel(tr("No instance selected"), this);
     m_statusCenter = new QLabel(tr("Total playtime: 0s"), this);
+    m_statusCopyright = new QLabel(BuildConfig.LAUNCHER_COPYRIGHT.split('\n').join(QStringLiteral(" · ")), this);
+    m_statusCopyright->setObjectName(QStringLiteral("legalCopyrightLabel"));
+    m_statusCopyright->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    m_statusCopyright->setToolTip(BuildConfig.LAUNCHER_COPYRIGHT);
     statusBar()->addPermanentWidget(m_statusLeft, 1);
     statusBar()->addPermanentWidget(m_statusCenter, 0);
+    statusBar()->addPermanentWidget(m_statusCopyright, 0);
 
     // Add "manage accounts" button, right align
     QWidget* spacer = new QWidget();
@@ -452,6 +468,12 @@ void MainWindow::retranslateUi()
     }
 
     ui->retranslateUi(this);
+
+    if (m_homeTabs && m_discoverPage) {
+        m_homeTabs->setTabText(m_homeTabs->indexOf(view), tr("Instances"));
+        m_homeTabs->setTabText(m_homeTabs->indexOf(m_discoverPage), tr("Keşfet"));
+        m_homeTabs->setTabText(m_homeTabs->indexOf(m_aiChatPage), tr("Manisa AI"));
+    }
 
     MinecraftAccountPtr defaultAccount = APPLICATION->accounts()->defaultAccount();
     if (defaultAccount) {
